@@ -6,20 +6,20 @@
     estructura del hash abierto
 */
 
-#define TAMANIO 100
+#define TAM_INICIAL 100
 #define CANTIDAD_INICIAL 0
 
 struct hash{
   lista_t** tabla;
   size_t capacidad; //tamaño del tabla filas
   size_t cantidad; // cantidad de elementos totales
-  hash_destruir_dato_t destruir_dato;
+  hash_destruir_dato_t destructor;
 };
 
 typedef struct campo{
   char* clave;
   void* dato;
-};
+} campo_t;
 
 struct hash_iter {
   const hash_t hash;
@@ -27,7 +27,6 @@ struct hash_iter {
   size_t cantidad; // cantidad de elemento que itero
   size_t indice_actual; // indice actual;
 };
-
 
 size_t hashing (const char* clave, size_t capacidad){
   unsigned int n1 = 378551;
@@ -59,7 +58,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
   for(int i=0 ; i < TAM_INICIAL ; i++) hash->tabla[i] = lista_crear();
 
   hash->capacidad = TAM_INICIAL;
-  hash->cantidad = 0;
+  hash->cantidad = CANTIDAD_INICIAL;
   hash->destructor = destruir_dato;
 
   return hash;
