@@ -156,3 +156,4 @@ void hash_iter_destruir(hash_iter_t *iter) {
     if (iter->iter_lista) lista_iter_destruir(iter->iter_lista);
     free(iter);
 }
+ /** lee los comit te voy a cagar a trompadas marto gato **/
