@@ -67,3 +67,92 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
 size_t hash_cantidad(const hash_t *hash){
   return hash->cantidad;
 }
+
+
+/*
+ + iteradores hash
+ +
+ */
+
+//leo -> agregue esto
+hash_iter_t *hash_iter_crear(const hash_t *hash){
+
+  if(!hash) return NULL;
+
+  hash_iter_t* iter = malloc(sizeof(hash_iter_t));
+
+  if(!iter) return NULL;
+
+  iter->hash = hash;
+  iter->iter_lista = NULL;
+
+  for (int pos = 0; pos < hash->capacidad; pos++){
+
+    if( iter->hash->tabla[pos] && !lista_esta_vacia(iter->hash->tabla[pos])){
+      iter->indice_actual = pos;
+      iter->iter_lista = lista_iter_crear(iter->hash->tabla[pos]);
+
+      break;
+    }
+  }
+
+  return iter;
+}
+
+//leo -> me costo eh. estube 10 min pensandolo :P
+bool hash_iter_avanzar(hash_iter_t *iter){
+  //pregunto si estoy al final
+  if(iter->iterados == iter->hash->cantidad) return false
+
+  //update iterados
+  iter->iterados++;
+
+  //avanzo
+  bool avanzo = lista_iter_avanzar(iter->iter_lista);
+
+  if(avanzo) return true;
+
+  //sino avanzo estaba en el final de lista
+  //La destruyo y busco la nueva lista para iterar
+
+  lista_iter_destruir(iter->iter_lista);
+
+  //antes de recorrer me fijo si hay mas datos
+  //sino hay no puedo avanzar
+
+  //actualizo iter_lista
+  iter->iter_lista = NULL;
+
+  if(iter->iterados == iter->hash->cantidad ) return false;
+
+  //exite un dato entonces lo busco .. no actualizo indice_actual para evitarme un if..
+  for (int pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++  ){
+
+    if( iter->hash->tabla[pos] && !lista_esta_vacia(iter->hash->tabla[pos])){
+      iter->indice_actual = pos;
+      iter->iter_lista = lista_iter_crear(iter->hash->tabla[pos]);
+      return true;
+    }
+  }
+  return false;
+}
+
+//leo -> agregue esto
+bool hash_iter_al_final(const hash_iter_t *iter) {
+    return iter->iterados == iter->hash->cantidad;
+}
+
+//leo -> agregue esto
+const char *hash_iter_ver_actual(const hash_iter_t *iter){
+  if ( iter->iterados == iter->hash->cantidad) return NULL;
+
+  campo_t* campo = lista_iter_ver_actual(iter->iter_lista);
+
+  return campo->clave;
+}
+
+//leo -> agregue esto
+void hash_iter_destruir(hash_iter_t *iter) {
+    if (iter->iter_lista) lista_iter_destruir(iter->iter_lista);
+    free(iter);
+}
