@@ -19,7 +19,7 @@ struct hash{
 typedef struct campo{
   char* clave;
   void* dato;
-} campo_t;
+} campo_t; // Se agrego
 
 struct hash_iter {
   const hash_t hash;
