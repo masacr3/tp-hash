@@ -1,0 +1,30 @@
+Los objetivos: son las cosas que quedan todabia por hacer.
+
+metas:
+  +hash_cantidad
+  +hash_crear
+  +hash_hashing
+
+falta:
+  hash_iter
+  hash_guardar
+  hash_borrar
+  hash_obtener
+  hash_pertenece
+  hash_destruir
+
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  hash_iter_crear
+  hash_iter_avanzar
+  hash_iter_ver_actual
+  hash_iter_al_final
+  hash_iter_destruir
+
+
+  marto cuando programes algo... y este bien. y subido
+  a la pagina de git..
+
+  por fabor modifica este archivo..
+
+para ver que laburo queda por hacer.
