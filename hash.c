@@ -6,8 +6,10 @@
     estructura del hash abierto
 */
 
-#define TAM_INICIAL 100 // Modificado TAMANIO_INICIAL
+#define TAMANIO_INICIAL 100 // Modificado TAMANIO_INICIAL
 #define CANTIDAD_INICIAL 0
+#define VALOR_REDIMENSION 4
+#define TAM_REDIMENSION 2
 
 struct hash{
   lista_t** tabla;
@@ -45,7 +47,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
   if(!hash) return NULL;
 
   //te conviene usar una estructura aux marto
-  lista_t** tabla = (lista_t**) malloc(sizeof(lista_t*) * TAM_INICIAL);
+  lista_t** tabla = (lista_t**) malloc(sizeof(lista_t*) * TAMANIO_INICIAL);
 
   if(!tabla){
     free(hash);
@@ -55,9 +57,9 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
   hash->tabla = tabla;
 
   //te corrijo que no inicializaste las posiciones del hash
-  for(int i=0 ; i < TAM_INICIAL ; i++) hash->tabla[i] = lista_crear();
+  for(int i=0 ; i < TAMANIO_INICIAL ; i++) hash->tabla[i] = lista_crear();
 
-  hash->capacidad = TAM_INICIAL;
+  hash->capacidad = TAMANIO_INICIAL;
   hash->cantidad = CANTIDAD_INICIAL; // Modificado 0
   hash->destructor = destruir_dato;
 
@@ -67,6 +69,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
 size_t hash_cantidad(const hash_t *hash){
   return hash->cantidad;
 }
+<<<<<<< HEAD
 
 
 /*
@@ -157,3 +160,5 @@ void hash_iter_destruir(hash_iter_t *iter) {
     free(iter);
 }
  /** lee los comit te voy a cagar a trompadas marto gato **/
+=======
+>>>>>>> 85989c61a71e0a86d6c0116c0c324c5bef20a433
