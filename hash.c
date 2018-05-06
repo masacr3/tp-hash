@@ -6,14 +6,14 @@
     estructura del hash abierto
 */
 
-#define TAM_INICIAL 100
+#define TAM_INICIAL 100 // Modificado TAMANIO_INICIAL
 #define CANTIDAD_INICIAL 0
 
 struct hash{
   lista_t** tabla;
   size_t capacidad; //tamaño del tabla filas
   size_t cantidad; // cantidad de elementos totales
-  hash_destruir_dato_t destructor;
+  hash_destruir_dato_t destructor; // Modificado destruir_dato
 };
 
 typedef struct campo{
@@ -58,7 +58,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
   for(int i=0 ; i < TAM_INICIAL ; i++) hash->tabla[i] = lista_crear();
 
   hash->capacidad = TAM_INICIAL;
-  hash->cantidad = CANTIDAD_INICIAL;
+  hash->cantidad = CANTIDAD_INICIAL; // Modificado 0
   hash->destructor = destruir_dato;
 
   return hash;
