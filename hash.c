@@ -69,7 +69,6 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
 size_t hash_cantidad(const hash_t *hash){
   return hash->cantidad;
 }
-<<<<<<< HEAD
 
 
 /*
@@ -160,5 +159,3 @@ void hash_iter_destruir(hash_iter_t *iter) {
     free(iter);
 }
  /** lee los comit te voy a cagar a trompadas marto gato **/
-=======
->>>>>>> 85989c61a71e0a86d6c0116c0c324c5bef20a433
