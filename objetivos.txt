@@ -1,9 +1,14 @@
 Los objetivos: son las cosas que quedan todabia por hacer.
 
-metas logradas:
+metas:
   +hash_cantidad
   +hash_crear
   +hash_hashing
+  +hash_guardar
+  +hash_pertenece
+  +hash_obtener
+  +hash_borrar
+  +hash_destruir
   +hash_iter
   +hash_iter_crear
   +hash_iter_avanzar
@@ -11,9 +16,14 @@ metas logradas:
   +hash_iter_al_final
   +hash_iter_destruir
 
-falta
-  hash_guardar
-  hash_borrar
-  hash_obtener
-  hash_pertenece
-  hash_destruir
+
+falta:
+  
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+  leo ya terminé todo y mepa que no se puede optimizar nada,
+  vuelvo del super y subo todo en el hash.c
+
+  marto cuando programes algo... y este bien. y subido
+  a la pagina de git..
