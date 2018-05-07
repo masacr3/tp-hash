@@ -66,15 +66,16 @@ void campo_destruir_wrapper(void* campo){
   campo_destruir(campo);
 }
 
-size_t hashing (const char* clave, size_t capacidad){
-  unsigned int n1 = 378551;
-  unsigned int n2 = 63689;
-  unsigned int clave_numerica = 0;
-  for (int i =0; *clave; clave++; i++){
-    clave_numerica = clave_numerica * n2 + (*clave);
-    n2 = n2 * n1;
-  }
-  return (clave_numerica % capacidad);
+size_t hashing (const char* clave, size_t tam){
+	unsigned int num1 = 378551;
+	unsigned int num2 = 63689;
+	unsigned int clave_numerica = 0;
+	unsigned int clave_como_int = *(unsigned int*)clave ; // Fixed 
+	for(int i = 0; *clave; clave++, i++){
+		clave_numerica = clave_numerica * num2 + clave_como_int;
+		num2 = num2 * num1;
+	}
+	return(clave_numerica%tam);
 }
 
 hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
