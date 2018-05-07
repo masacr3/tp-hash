@@ -22,8 +22,9 @@ falta:
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-  leo ya terminé todo y mepa que no se puede optimizar nada,
-  vuelvo del super y subo todo en el hash.c
+  leo lo corri y tira error el compilador, tira error en hashing, lo que hiciste vos en
+  el iterador y algo mio con el tema de crear el campo por el const char* que voy a preguntar
+  mañana.
 
   marto cuando programes algo... y este bien. y subido
   a la pagina de git..
