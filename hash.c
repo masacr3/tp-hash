@@ -31,13 +31,21 @@ struct hash_iter {
 };
 
 /* Crea el campo */
+//->modificado por leo
 hash_campo_t* campo_crear(const char* clave,void* dato){
   hash_campo_t* campo=malloc(sizeof(hash_campo_t));
 
   if (!campo) return NULL;
-  
-  campo->clave=clave;
-  campo->dato=dato;
+
+  size_t len = strlen(clave); //leo->agregue
+  char* copy_clave = malloc(sizeof(char) * ( len +1 )) //leo->agregue
+
+  if (!copy_clave) return NULL; //leo->agregue
+
+  strcpy(copy_clave,clave); //leo->agregue
+  campo->clave= copy_clave;//leo->agregue
+  campo->dato= dato;
+
   return campo;
 }
 
