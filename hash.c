@@ -33,7 +33,9 @@ struct hash_iter {
 /* Crea el campo */
 hash_campo_t* campo_crear(const char* clave,void* dato){
   hash_campo_t* campo=malloc(sizeof(hash_campo_t));
+
   if (!campo) return NULL;
+  
   campo->clave=clave;
   campo->dato=dato;
   return campo;
@@ -357,7 +359,7 @@ void hash_destruir(hash_t* hash){
     lista_iter_destruir(iter);
     lista_destruir(lista_actual,NULL);
   }
-  
+
   free(hash);
 }
 
