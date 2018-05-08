@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
-#include "lista.h"
 #include "hash.h"
+
 /*
     estructura del hash abierto
 */
@@ -24,9 +24,9 @@ typedef struct campo{
 } hash_campo_t; // Se agrego
 
 struct hash_iter {
-  const hash_t hash;
+  const hash_t* hash; //fixed
   lista_iter_t* iter_lista;
-  size_t cantidad; // cantidad de elemento que itero
+  size_t iterados; // cantidad de elemento que itero
   size_t indice_actual; // indice actual;
 };
 
@@ -38,7 +38,7 @@ hash_campo_t* campo_crear(const char* clave,void* dato){
   if (!campo) return NULL;
 
   size_t len = strlen(clave); //leo->agregue
-  char* copy_clave = malloc(sizeof(char) * ( len +1 )) //leo->agregue
+  char* copy_clave = malloc(sizeof(char) * ( len +1 )); //leo->agregue
 
   if (!copy_clave) return NULL; //leo->agregue
 
@@ -70,7 +70,7 @@ size_t hashing (const char* clave, size_t tam){
 	unsigned int num1 = 378551;
 	unsigned int num2 = 63689;
 	unsigned int clave_numerica = 0;
-	unsigned int clave_como_int = *(unsigned int*)clave ; // Fixed 
+	unsigned int clave_como_int = *(unsigned int*)clave ; // Fixed
 	for(int i = 0; *clave; clave++, i++){
 		clave_numerica = clave_numerica * num2 + clave_como_int;
 		num2 = num2 * num1;
@@ -385,10 +385,10 @@ hash_iter_t *hash_iter_crear(const hash_t *hash){
 
   if(!iter) return NULL;
 
-  iter->hash = hash;
+  iter->hash = hash; //fixed
   iter->iter_lista = NULL;
 
-  for (int pos = 0; pos < hash->capacidad; pos++){
+  for (size_t pos = 0; pos < hash->capacidad; pos++){
 
     if( iter->hash->tabla[pos] && !lista_esta_vacia(iter->hash->tabla[pos])){
       iter->indice_actual = pos;
@@ -404,7 +404,7 @@ hash_iter_t *hash_iter_crear(const hash_t *hash){
 //leo -> me costo eh. estube 10 min pensandolo :P
 bool hash_iter_avanzar(hash_iter_t *iter){
   //pregunto si estoy al final
-  if(iter->iterados == iter->hash->cantidad) return false
+  if(iter->iterados == iter->hash->cantidad) return false;
 
   //update iterados
   iter->iterados++;
@@ -428,7 +428,7 @@ bool hash_iter_avanzar(hash_iter_t *iter){
   if(iter->iterados == iter->hash->cantidad ) return false;
 
   //exite un dato entonces lo busco .. no actualizo indice_actual para evitarme un if..
-  for (int pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++  ){
+  for (size_t pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++  ){
 
     if( iter->hash->tabla[pos] && !lista_esta_vacia(iter->hash->tabla[pos])){
       iter->indice_actual = pos;

@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
+#include "lista.h"
 
 // Los structs deben llamarse "hash" y "hash_iter".
 struct hash;

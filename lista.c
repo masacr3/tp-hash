@@ -1,9 +1,7 @@
 #include "lista.h"
 #include <stdlib.h>
 
-typedef struct lista lista_t;
 typedef struct nodo nodo_t;
-typedef struct lista_iter lista_iter_t;
 
 /***  Estructuras ***/
 struct nodo {

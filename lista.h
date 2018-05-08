@@ -16,13 +16,6 @@ lista_t *lista_crear(void);
 // Pre: la pila fue creada.
 bool lista_esta_vacia(const lista_t *lista);
 
-#include "lista.h"
-#include "testing.h"
-#include <stddef.h>
-#include <stdlib.h>
-#include <strings.h>
-#include <stdio.h>
-
 // Inserta un dato en la primera posicion de la lista.
 // Pre: La lista esta creada.
 // Post: Devuelve true si pudo insertar el dato en caso contrario false

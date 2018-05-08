@@ -8,6 +8,6 @@ HFILES=hash.h lista.h testing.h
 all:
 	$(CC) $(CFLAGS) $(CFILES) -o $(EXEC)
 run: all
-	./$(EXEC) 500
+	./$(EXEC)
 valgrind: all
 	valgrind	$(VFLAGS)	./$(EXEC)
