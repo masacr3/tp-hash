@@ -20,6 +20,7 @@
 
 static void prueba_crear_hash_vacio()
 {
+  printf("INICIANDO PRUEBAS HASH VACIO\n");
     hash_t* hash = hash_crear(NULL);
 
     print_test("Prueba hash crear hash vacio", hash);
@@ -33,6 +34,7 @@ static void prueba_crear_hash_vacio()
 
 static void prueba_iterar_hash_vacio()
 {
+  printf("INICIANDO PRUEBAS ITERAR HASH VACIO\n");
     hash_t* hash = hash_crear(NULL);
     hash_iter_t* iter = hash_iter_crear(hash);
     print_test("Prueba hash iter crear iterador hash vacio", iter);
@@ -46,6 +48,7 @@ static void prueba_iterar_hash_vacio()
 
 static void prueba_hash_insertar()
 {
+  printf("INICIANDO PRUEBAS HASH INSERTAR\n");
     hash_t* hash = hash_crear(NULL);
 
     char *clave1 = "perro", *valor1 = "guau";
@@ -79,6 +82,7 @@ static void prueba_hash_insertar()
 
 static void prueba_hash_reemplazar()
 {
+  printf("INICIANDO PRUEBAS HASH REEMPLAZAR\n");
     hash_t* hash = hash_crear(NULL);
 
     char *clave1 = "perro", *valor1a = "guau", *valor1b = "warf";
@@ -106,6 +110,7 @@ static void prueba_hash_reemplazar()
 
 static void prueba_hash_reemplazar_con_destruir()
 {
+  printf("INICIANDO PRUEBAS HASH REEMPLAZAR CON DESTRUIR\n");
     hash_t* hash = hash_crear(free);
 
     char *clave1 = "perro", *valor1a, *valor1b;
@@ -140,6 +145,7 @@ static void prueba_hash_reemplazar_con_destruir()
 
 static void prueba_hash_borrar()
 {
+  printf("INICIANDO PRUEBAS HASH BORRAR\n");
     hash_t* hash = hash_crear(NULL);
 
     char *clave1 = "perro", *valor1 = "guau";
@@ -178,6 +184,7 @@ static void prueba_hash_borrar()
 
 static void prueba_hash_clave_vacia()
 {
+  printf("INICIANDO PRUEBAS HASH CLAVE VACIA\n");
     hash_t* hash = hash_crear(NULL);
 
     char *clave = "", *valor = "";
@@ -194,6 +201,7 @@ static void prueba_hash_clave_vacia()
 
 static void prueba_hash_valor_null()
 {
+  printf("INICIANDO PRUEBAS HASH CON VALOR NULL\n");
     hash_t* hash = hash_crear(NULL);
 
     char *clave = "", *valor = NULL;
@@ -211,6 +219,7 @@ static void prueba_hash_valor_null()
 
 static void prueba_hash_volumen(size_t largo, bool debug)
 {
+  printf("INICIANDO PREUBAS HASH VOLUMEN\n");
     hash_t* hash = hash_crear(NULL);
 
     const size_t largo_clave = 10;
@@ -279,6 +288,7 @@ static ssize_t buscar(const char* clave, char* claves[], size_t largo)
 
 static void prueba_hash_iterar()
 {
+  printf("INICIANDO PRUEBAS HASH ITERAR\n");
     hash_t* hash = hash_crear(NULL);
 
     char *claves[] = {"perro", "gato", "vaca"};
@@ -332,6 +342,7 @@ static void prueba_hash_iterar()
 
 static void prueba_hash_iterar_volumen(size_t largo)
 {
+  printf("INICIANDO PRUEBAS HASH ITERAR VOLUMEN\n");
     hash_t* hash = hash_crear(NULL);
 
     const size_t largo_clave = 10;
