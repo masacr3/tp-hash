@@ -391,27 +391,46 @@ void hash_destruir(hash_t* hash){
   return iter;
 }*/
 
+
+/*
+ leo -> Hola marto te comento que el nuevo enfoque esta bueno...
+ note algunos errores de implementacion que vi:
+	+line : if (!lista_esta_vacia(lista_actual))
+	
+		bugging: si el hash = NULL , no inicializas 'iter_lista', ni 'indice_actual' en algun momento esto va a romper..
+		
+		Fixed: si el hash es NULL , Indice_actual = -1
+		
+		Dudas: Pensar que hacemos iter-lista cuando el hash en NULL ( osea el valor por defecto )
+*/
 hash_iter_t* hash_iter_crear(const hash_t *hash){
   hash_iter_t* iter=malloc(sizeof(hash_iter_t));
 
   if (!iter) return NULL;
 
   iter->hash=hash;
+	
+	//leo-> agregue esto marto
+	iter->indice_actual = -1    //leo->tendria q ser el valor por defecto en caso de estar todo el hash vacio
+  iter->iterados = 0; //leo-> swap(line)
+	iter->iter_lista = NULL;  //leo->el valor por defecto tendria que ser null. si no hay listas que iterar que no itere nada.. o nO?
 
   for (size_t i=0; i<hash->capacidad; i++){
     lista_t* lista_actual=hash->tabla[i];
 
     if (!lista_actual) continue;
-
+		
+		iter->iter_lista=lista_iter_crear(lista_actual);
+    iter->indice_actual=i;
+    break;
+		/*
     if (!lista_esta_vacia(lista_actual)){
       iter->iter_lista=lista_iter_crear(lista_actual);
       iter->indice_actual=i;
       break;
-    }
-
+    }*/	
   }
-  
-  iter->iterados=0;
+  //swap (line) iter->iterados=0;
   return iter;
 }
 
