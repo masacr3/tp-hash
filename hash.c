@@ -410,10 +410,10 @@ hash_iter_t* hash_iter_crear(const hash_t *hash){
 
   iter->hash=hash;
 	
-	//leo-> agregue esto marto
-	iter->indice_actual = -1    //leo->tendria q ser el valor por defecto en caso de estar todo el hash vacio
-  iter->iterados = 0; //leo-> swap(line)
-	iter->iter_lista = NULL;  //leo->el valor por defecto tendria que ser null. si no hay listas que iterar que no itere nada.. o nO?
+    //leo-> agregue esto marto
+    iter->indice_actual = -1    //leo->tendria q ser el valor por defecto en caso de estar todo el hash vacio
+    iter->iterados = 0; //leo-> swap(line)
+    iter->iter_lista = NULL;  //leo->el valor por defecto tendria que ser null. si no hay listas que iterar que no itere nada.. o nO?
 
   for (size_t i=0; i<hash->capacidad; i++){
     lista_t* lista_actual=hash->tabla[i];
