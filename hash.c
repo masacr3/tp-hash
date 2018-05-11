@@ -452,14 +452,14 @@ bool hash_iter_avanzar(hash_iter_t *iter){
 
   //sino avanzo estaba en el final de lista
   //La destruyo y busco la nueva lista para iterar
-
-  lista_iter_destruir(iter->iter_lista);
+  
+  //lista_iter_destruir(iter->iter_lista);
 
   //antes de recorrer me fijo si hay mas datos
   //sino hay no puedo avanzar
 
   //actualizo iter_lista
-  iter->iter_lista = NULL;
+  //iter->iter_lista = NULL;
 
   if (hash_iter_al_final(iter)) return false;
 
