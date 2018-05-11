@@ -420,7 +420,7 @@ hash_iter_t* hash_iter_crear(const hash_t *hash){
 
     if (!lista_actual) continue;
 		
-		iter->iter_lista=lista_iter_crear(lista_actual);
+    iter->iter_lista=lista_iter_crear(lista_actual);
     iter->indice_actual=i;
     break;
 		/*
