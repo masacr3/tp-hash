@@ -87,7 +87,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
   if(!hash) return NULL;
 
   //te conviene usar una estructura aux marto
-  lista_t** tabla = (lista_t**) malloc(sizeof(lista_t*) * TAMANIO_INICIAL);
+  lista_t** tabla = malloc(sizeof(lista_t*) * TAMANIO_INICIAL);
 
   if(!tabla){
     free(hash);
@@ -97,7 +97,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
   hash->tabla = tabla;
 
   //te corrijo que no inicializaste las posiciones del hash
-  for(int i=0 ; i < TAMANIO_INICIAL ; i++) hash->tabla[i] = lista_crear();
+  for(int i=0 ; i < TAMANIO_INICIAL ; i++) hash->tabla[i] = NULL;
 
   hash->capacidad = TAMANIO_INICIAL;
   hash->cantidad = 0; // Modificado 0
@@ -122,7 +122,11 @@ bool _hash_guardar(hash_t* hash,const char* clave,void* dato){
 
   if (!campo) return false;
 
+  if (!hash->tabla[posicion]) hash->tabla[posicion]=lista_crear();
+
   lista_t* lista_actual=hash->tabla[posicion];
+
+  if (!lista_actual) return false;
 
   if (hash_pertenece(hash,clave)){
     lista_iter_t* iter=lista_iter_crear(lista_actual);
@@ -140,8 +144,7 @@ bool _hash_guardar(hash_t* hash,const char* clave,void* dato){
 
          if (hash->destructor){
            hash_destruir_dato_t destruir=hash->destructor;
-           void* dato=_campo_actual->dato;
-           destruir(dato);
+           destruir(_campo_actual->dato);
          }
 
          // marto-> destruyo el campo actual dado que se va a tener que reemplazar
@@ -179,12 +182,15 @@ bool hash_redimensionar(hash_t* hash,size_t tamanio_nuevo){
 
   hash->tabla=tabla_nueva;
 
-  for (int i=0; i<tamanio_nuevo; i++) hash->tabla[i]=lista_crear();
+  for (int i=0; i<tamanio_nuevo; i++) hash->tabla[i]=NULL;
 
   hash->capacidad=tamanio_nuevo;
   hash->cantidad=0;
 
   for (int i=0; i<tamanio_antiguo; i++){
+
+    if (!tabla_vieja[i]) continue;
+
     lista_t* lista_actual=tabla_vieja[i];
 
     if (lista_esta_vacia(lista_actual)){
@@ -202,16 +208,7 @@ bool hash_redimensionar(hash_t* hash,size_t tamanio_nuevo){
 
     while (!lista_iter_al_final(iter)){
       hash_campo_t* campo_actual=lista_iter_ver_actual(iter);
-      //char* clave_actual=campo_actual->clave;
-      //void* dato_actual=campo_actual->dato;
       ok &=_hash_guardar(hash,campo_actual->clave,campo_actual->dato);
-
-      if (hash->destructor){
-        hash_destruir_dato_t destruir=hash->destructor;
-        //void* dato_destruir=campo_actual->dato;
-        destruir(campo_actual->dato);
-      }
-
       lista_iter_avanzar(iter);
 
     }
@@ -275,10 +272,12 @@ void* hash_borrar(hash_t* hash,const char* clave){
   return dato;
 }
 
-bool hash_pertenece(const hash_t* hash,const char* clave){ //CAMBIEEEE
+bool hash_pertenece(const hash_t* hash,const char* clave){
   size_t coincidencia=0;
   size_t posicion=hashing(clave,hash->capacidad);
   lista_t* lista_actual=hash->tabla[posicion];
+
+  if (!lista_actual) return false;
 
   if (lista_esta_vacia(lista_actual)) return false;
 
@@ -296,7 +295,7 @@ bool hash_pertenece(const hash_t* hash,const char* clave){ //CAMBIEEEE
   lista_iter_destruir(iter);
 
   if (!coincidencia) return false;
-  
+
   return true;
 }
 
@@ -337,6 +336,9 @@ void hash_destruir(hash_t* hash){
   // siempre elimino desde el principio.
 
   for (int i=0; i<hash->capacidad; i++){
+
+    if (!hash->tabla[i]) continue;
+
     lista_t* lista_actual=hash->tabla[i];
 
     if (lista_esta_vacia(lista_actual)){
@@ -353,7 +355,6 @@ void hash_destruir(hash_t* hash){
 
       if (hash->destructor){
         hash_destruir_dato_t destruir=hash->destructor;
-        //void* dato=campo_actual->dato;
         destruir(campo_actual->dato);
       }
 
@@ -372,11 +373,8 @@ void hash_destruir(hash_t* hash){
  ******************************************************************************/
 
 //leo -> agregue esto
-hash_iter_t* hash_iter_crear(const hash_t *hash){
+/*hash_iter_t* hash_iter_crear(const hash_t *hash){
   hash_iter_t* iter = malloc(sizeof(hash_iter_t));
-
-  if(!iter) return NULL;
-
   iter->hash = hash;
   iter->iter_lista = NULL;
 
@@ -391,12 +389,36 @@ hash_iter_t* hash_iter_crear(const hash_t *hash){
   }
 
   return iter;
+}*/
+
+hash_iter_t* hash_iter_crear(const hash_t *hash){
+  hash_iter_t* iter=malloc(sizeof(hash_iter_t));
+
+  if (!iter) return NULL;
+
+  iter->hash=hash;
+
+  for (size_t i=0; i<hash->capacidad; i++){
+    lista_t* lista_actual=hash->tabla[i];
+
+    if (!lista_actual) continue;
+
+    if (!lista_esta_vacia(lista_actual)){
+      iter->iter_lista=lista_iter_crear(lista_actual);
+      iter->indice_actual=i;
+      break;
+    }
+
+  }
+  
+  iter->iterados=0;
+  return iter;
 }
 
 //leo -> me costo eh. estube 10 min pensandolo :P
 bool hash_iter_avanzar(hash_iter_t *iter){
   //pregunto si estoy al final
-  if(iter->iterados == iter->hash->cantidad) return false;
+  if(hash_iter_al_final(iter)) return false;
 
   //update iterados
   iter->iterados++;
@@ -417,14 +439,17 @@ bool hash_iter_avanzar(hash_iter_t *iter){
   //actualizo iter_lista
   iter->iter_lista = NULL;
 
-  if(iter->iterados == iter->hash->cantidad ) return false;
+  if (hash_iter_al_final(iter)) return false;
 
   //exite un dato entonces lo busco .. no actualizo indice_actual para evitarme un if..
   for (size_t pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++  ){
+    lista_t* lista_actual=iter->hash->tabla[pos];
 
-    if( iter->hash->tabla[pos] && !lista_esta_vacia(iter->hash->tabla[pos])){
+    if (!lista_actual) continue;
+
+    if (!lista_esta_vacia(lista_actual)){
       iter->indice_actual = pos;
-      iter->iter_lista = lista_iter_crear(iter->hash->tabla[pos]);
+      iter->iter_lista = lista_iter_crear(lista_actual);
       return true;
     }
   }
@@ -438,7 +463,7 @@ bool hash_iter_al_final(const hash_iter_t *iter) {
 
 //leo -> agregue esto
 const char *hash_iter_ver_actual(const hash_iter_t *iter){
-  if ( iter->iterados == iter->hash->cantidad) return NULL;
+  if (hash_iter_al_final(iter)) return NULL;
 
   hash_campo_t* campo = lista_iter_ver_actual(iter->iter_lista);
 
@@ -447,6 +472,6 @@ const char *hash_iter_ver_actual(const hash_iter_t *iter){
 
 //leo -> agregue esto
 void hash_iter_destruir(hash_iter_t *iter) {
-    if (iter->iter_lista) lista_iter_destruir(iter->iter_lista);
-    free(iter);
+  if (!hash_iter_al_final(iter)) lista_iter_destruir(iter->iter_lista);
+  free(iter);
 }
