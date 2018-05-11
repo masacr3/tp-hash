@@ -27,7 +27,7 @@ struct hash_iter {
   const hash_t* hash;
   lista_iter_t* iter_lista;
   size_t iterados; // cantidad de elemento que itero
-  size_t indice_actual; // indice actual;
+  int indice_actual; // indice actual;
 };
 
 /* Crea el campo */
