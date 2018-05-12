@@ -27,7 +27,7 @@ struct hash_iter {
   const hash_t* hash;
   lista_iter_t* iter_lista;
   size_t iterados; // cantidad de elemento que itero
-  int indice_actual; // indice actual;
+  size_t indice_actual; // indice actual;
 };
 
 /* Crea el campo */
@@ -371,37 +371,25 @@ void hash_destruir(hash_t* hash){
 /*******************************************************************************
  *                            ITERADOR
  ******************************************************************************/
-
-//leo -> agregue esto
-/*hash_iter_t* hash_iter_crear(const hash_t *hash){
-  hash_iter_t* iter = malloc(sizeof(hash_iter_t));
-  iter->hash = hash;
-  iter->iter_lista = NULL;
-
-  for (size_t pos = 0; pos < hash->capacidad; pos++){
-
-    if( iter->hash->tabla[pos] && !lista_esta_vacia(iter->hash->tabla[pos])){
-      iter->indice_actual = pos;
-      iter->iter_lista = lista_iter_crear(iter->hash->tabla[pos]);
-
-      break;
-    }
-  }
-
-  return iter;
-}*/
-
-
 /*
  leo -> Hola marto te comento que el nuevo enfoque esta bueno...
  note algunos errores de implementacion que vi:
 	+line : if (!lista_esta_vacia(lista_actual))
-	
+
 		bugging: si el hash = NULL , no inicializas 'iter_lista', ni 'indice_actual' en algun momento esto va a romper..
-		
+
 		Fixed: si el hash es NULL , Indice_actual = -1
-		
+
 		Dudas: Pensar que hacemos iter-lista cuando el hash en NULL ( osea el valor por defecto )
+*/
+
+/*
+ marto-> leo, fijate que en el avanzar anterior no se estaba avanzando bien porque el iterador
+ siempre avanza devolviendo true en estos casos y no habias contemplado si al avanzar caias al
+ final de la lista, por ende si querias ver el actual del iterdor del hash en algun moemnto
+ ibas a caer en NULL y por eso tiraba ese error me dijo el de los callenge. Me hacia ruido
+ ese avanzar y lo que me dijeron hoy porque nadie pensaba en que pasa si estoy al final de
+ la lista.
 */
 hash_iter_t* hash_iter_crear(const hash_t *hash){
   hash_iter_t* iter=malloc(sizeof(hash_iter_t));
@@ -409,73 +397,48 @@ hash_iter_t* hash_iter_crear(const hash_t *hash){
   if (!iter) return NULL;
 
   iter->hash=hash;
-	
-    //leo-> agregue esto marto
-    iter->indice_actual = -1    //leo->tendria q ser el valor por defecto en caso de estar todo el hash vacio
-    iter->iterados = 0; //leo-> swap(line)
-    iter->iter_lista = NULL;  //leo->el valor por defecto tendria que ser null. si no hay listas que iterar que no itere nada.. o nO?
-  
+
+  //leo-> agregue esto marto
+  iter->indice_actual = hash->capacidad+1; //leo->tendria q ser el valor por defecto en caso de estar todo el hash vacio
+  iter->iterados = 0; //marto-> leo te respondo la linea de arriba, el valor por defecto es la capacidad+1, lo pregunté y estaba bien
+  iter->iter_lista = NULL; //leo->el valor por defecto tendria que ser null. si no hay listas que iterar que no itere nada.. o nO?
+
   //OPTIMIZACION
   if (!hash->cantidad) return iter;
-	
+
   for (size_t i=0; i<hash->capacidad; i++){
     lista_t* lista_actual=hash->tabla[i];
 
     if (!lista_actual) continue;
-		
+
     iter->iter_lista=lista_iter_crear(lista_actual);
     iter->indice_actual=i;
     break;
-		/*
-    if (!lista_esta_vacia(lista_actual)){
-      iter->iter_lista=lista_iter_crear(lista_actual);
-      iter->indice_actual=i;
-      break;
-    }*/	
   }
-  //swap (line) iter->iterados=0;
   return iter;
 }
 
-//leo -> me costo eh. estube 10 min pensandolo :P
 bool hash_iter_avanzar(hash_iter_t *iter){
-  //pregunto si estoy al final
+  
   if(hash_iter_al_final(iter)) return false;
 
-  //update iterados
   iter->iterados++;
-
-  //avanzo
   bool avanzo = lista_iter_avanzar(iter->iter_lista);
 
-  if(avanzo) return true;
+  if (avanzo){ //marto-> ni los profesores se rescataron de esto, merezco aprobar la materia ya
+    if (lista_iter_al_final(iter->iter_lista) && !hash_iter_al_final(iter)){
+      for (size_t pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++){
+        lista_t* lista_actual=iter->hash->tabla[pos];
 
-  //sino avanzo estaba en el final de lista
-  //La destruyo y busco la nueva lista para iterar
-  
-  //lista_iter_destruir(iter->iter_lista);
+        if (!lista_actual) continue;
 
-  //antes de recorrer me fijo si hay mas datos
-  //sino hay no puedo avanzar
-
-  //actualizo iter_lista
-  //iter->iter_lista = NULL;
-
-  if (hash_iter_al_final(iter)) return false;
-
-  //exite un dato entonces lo busco .. no actualizo indice_actual para evitarme un if..
-  for (size_t pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++  ){
-    lista_t* lista_actual=iter->hash->tabla[pos];
-
-    if (!lista_actual) continue;
-
-    if (!lista_esta_vacia(lista_actual)){
-      iter->indice_actual = pos;
-      iter->iter_lista = lista_iter_crear(lista_actual);
-      return true;
+        iter->indice_actual = pos;
+        iter->iter_lista = lista_iter_crear(lista_actual);
+        break;
+      }
     }
   }
-  return false;
+  return true;
 }
 
 //leo -> agregue esto
