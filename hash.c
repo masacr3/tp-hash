@@ -365,6 +365,7 @@ void hash_destruir(hash_t* hash){
     lista_destruir(lista_actual,NULL);
   }
 
+  free(hash->tabla);//Agregado
   free(hash);
 }
 
@@ -418,44 +419,31 @@ hash_iter_t* hash_iter_crear(const hash_t *hash){
   return iter;
 }
 
-//Refactorize -> Delete bug
 bool hash_iter_avanzar(hash_iter_t *iter){
-  
-  //case NULL or End Hash
-  if( iter->hash->cantidad == iter->iterados ) return false; //modified
-  
-  //hay elementos en el hash
+
+  if(hash_iter_al_final(iter)) return false; // Usemos la primitiva leo, para algo esta 
+
   iter->iterados++;
-	
   lista_iter_avanzar(iter->iter_lista);
-  
-  if(!lista_iter_al_final(iter->iter_lista) return true;
-  
-  /*
-  	si caigo aca es por q estoy al final de la lista
-	pasos:
-		se va a buscar una nueva lista no vacia dentro del hash
-		si encuentra retorna true sino false
- */
-  lista_iter_destruir(iter->iter-lista); 
-  iter->iter_lista = NULL;
-  
-  //busco la nueva lista
-  
-  for (size_t pos = iter->indice_actual +1; pos < iter->hash->capacidad; pos++){
-	  
-	  if(!iter->hash->tabla[pos]) continue;
-	  
-	  //encontro algo
-	  iter->indice_actual = pos;
-	  iter->iter_lista = lista_iter_crear(iter->hash->tabla[pos]);
-	  
-	  return true;
+
+  if (!lista_iter_al_final(iter->iter_lista)) return true;
+
+  lista_iter_destruir(iter->iter_lista);
+  iter->iter_lista=NULL;
+
+  for (size_t pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++){
+    lista_t* lista_actual=iter->hash->tabla[pos];
+
+    if (!lista_actual) continue;
+
+    iter->indice_actual = pos;
+    iter->iter_lista = lista_iter_crear(lista_actual);
+    return true;
   }
-  
-  //fin del hash
   return false;
   /*
+  bool avanzo = lista_iter_avanzar(iter->iter_lista);
+
   if (avanzo){ //marto-> ni los profesores se rescataron de esto, merezco aprobar la materia ya
     if (lista_iter_al_final(iter->iter_lista) && !hash_iter_al_final(iter)){
       for (size_t pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++){
@@ -469,8 +457,7 @@ bool hash_iter_avanzar(hash_iter_t *iter){
       }
     }
   }
-  return true;
- */
+  return true;*/
 }
 
 //leo -> agregue esto
