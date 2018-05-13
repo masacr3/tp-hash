@@ -444,11 +444,11 @@ bool hash_iter_avanzar(hash_iter_t *iter){
   
   for (size_t pos = iter->indice_actual +1; pos < iter->hash->capacidad; pos++){
 	  
-	  if(!iter->hash->tabla[i]) continue;
+	  if(!iter->hash->tabla[pos]) continue;
 	  
 	  //encontro algo
 	  iter->indice_actual = pos;
-	  iter->iter_lista = lista_iter_crear(iter->hash->tabla[i]);
+	  iter->iter_lista = lista_iter_crear(iter->hash->tabla[pos]);
 	  
 	  return true;
   }
