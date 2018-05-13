@@ -1,6 +1,6 @@
 Hola marto. te comento que ya termine el iterador. anda joya.. 
 
-te comento la salida del valgrind con respecto a tu hash
+te comento la salida del valgrind con respecto a tu hash fijate que tira esto
 
 ==1482== HEAP SUMMARY:
 ==1482==     in use at exit: 33,600 bytes in 12 blocks
