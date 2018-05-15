@@ -1,9 +1,18 @@
+/* Integrantes: Stefanelli D'Elias Carlos Martín y Rolon Leonel.
+ * Padrones: 100488 y 101009.
+ * Grupo: G24.
+ * Corrector: Gianmarco Cafferata.
+ * Entrega: hash (abierto).
+ * Fecha de entrega: 14/05/18.
+ */
+
 #ifndef HASH_H
 #define HASH_H
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
 #include "lista.h"
 
 // Los structs deben llamarse "hash" y "hash_iter".
