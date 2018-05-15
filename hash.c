@@ -1,23 +1,16 @@
-/* Integrantes: Stefanelli D'Elias Carlos Martín y Rolon Leonel.
- * Padrones: 100488 y 101009.
- * Grupo: G24.
- * Corrector: Gianmarco Cafferata.
- * Entrega: hash (abierto).
- * Fecha de entrega: 14/05/18.
- */
-
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <stddef.h>
 #include "hash.h"
-#include <stdio.h>
+#include "lista.h"
 /*
     estructura del hash abierto
 */
 
 #define TAMANIO_INICIAL 100
-#define VALOR_REDIMENSION_GUARDAR 4
+#define VALOR_REDIMENSION_GUARDAR 8
 #define TAMANIO_REDIMENSION 2
-#define VALOR_REDIMENSION_BORRAR 1
 
 struct hash{
   lista_t** tabla;
@@ -230,8 +223,9 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 void* hash_borrar(hash_t* hash,const char* clave){
   size_t factor_de_carga=hash->cantidad/hash->capacidad;
   size_t tamanio_nuevo=hash->capacidad/TAMANIO_REDIMENSION;
+  size_t un_cuarto_hash=hash->capacidad/4;
 
-  if (factor_de_carga==VALOR_REDIMENSION_BORRAR && tamanio_nuevo>=TAMANIO_INICIAL) hash_redimensionar(hash,tamanio_nuevo);
+  if (factor_de_carga==un_cuarto_hash && tamanio_nuevo>=TAMANIO_INICIAL) hash_redimensionar(hash,tamanio_nuevo);
 
   if (!hash_pertenece(hash,clave)) return NULL;
 
@@ -241,16 +235,16 @@ void* hash_borrar(hash_t* hash,const char* clave){
 
   if (!iter) return NULL;
 
-  void* dato;
+  void* dato=NULL;
 
   while (!lista_iter_al_final(iter)){
     hash_campo_t* campo_actual=lista_iter_ver_actual(iter);
     char* clave_actual=campo_actual->clave;
 
     if (strcmp(clave,clave_actual)==0){
-      hash_campo_t* campo_actual=lista_iter_borrar(iter);
-      dato=campo_actual->dato;
-      campo_destruir(campo_actual);
+      hash_campo_t* _campo_actual=lista_iter_borrar(iter);
+      dato=_campo_actual->dato;
+      campo_destruir(_campo_actual);
       hash->cantidad--;
       break;
     }
@@ -299,7 +293,7 @@ void* hash_obtener(const hash_t* hash,const char* clave){
 
   if (!iter) return NULL;
 
-  void* dato;
+  void* dato=NULL;
 
   while (!lista_iter_al_final(iter)){
     hash_campo_t* campo_actual=lista_iter_ver_actual(iter);
