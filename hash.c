@@ -9,8 +9,9 @@
 */
 
 #define TAMANIO_INICIAL 100
-#define VALOR_REDIMENSION_GUARDAR 8
+#define VALOR_REDIMENSION_GUARDAR 0.7
 #define TAMANIO_REDIMENSION 2
+#define VALOR_REDIMENSION_BORRAR 0.4
 
 struct hash{
   lista_t** tabla;
@@ -70,16 +71,21 @@ void campo_destruir_wrapper(void* campo){
   campo_destruir(campo);
 }
 
-size_t hashing (const char* clave, size_t tam){
-	unsigned int num1 = 378551;
-	unsigned int num2 = 63689;
-	unsigned int clave_numerica = 0;
-	unsigned int clave_como_int = *(unsigned int*)clave;
-	for(int i = 0; *clave; clave++, i++){
-		clave_numerica = clave_numerica * num2 + clave_como_int;
-		num2 = num2 * num1;
-	}
-	return(clave_numerica%tam);
+// Funcion de hashing para la clave.
+size_t djb2_hash(const char* cp){
+    unsigned int hash = 5381;
+    int c;
+
+    while ((c = *cp++))
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
+
+// Esta es la funcion que se deberia usar para hashear la clave.
+// LLama a la funcion de hashing y le aplica el modulo del tamaño del hash.
+size_t hashing(const char *clave, size_t capacidad){
+    return djb2_hash(clave) % capacidad;
 }
 
 hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
@@ -212,7 +218,7 @@ bool hash_redimensionar(hash_t* hash,size_t tamanio_nuevo){
 }
 
 bool hash_guardar(hash_t *hash, const char *clave, void *dato){
-  size_t factor_de_carga=hash->cantidad/hash->capacidad;
+  float factor_de_carga=(float)hash->cantidad/(float)hash->capacidad;
   size_t tamanio_nuevo=hash->capacidad*TAMANIO_REDIMENSION;
 
   if (factor_de_carga==VALOR_REDIMENSION_GUARDAR) hash_redimensionar(hash,tamanio_nuevo);
@@ -221,11 +227,11 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 }
 
 void* hash_borrar(hash_t* hash,const char* clave){
-  size_t factor_de_carga=hash->cantidad/hash->capacidad;
+  float factor_de_carga=(float)hash->cantidad/(float)hash->capacidad;
   size_t tamanio_nuevo=hash->capacidad/TAMANIO_REDIMENSION;
-  size_t un_cuarto_hash=hash->capacidad/4;
+  //size_t un_cuarto_hash=hash->capacidad/4;
 
-  if (factor_de_carga==un_cuarto_hash && tamanio_nuevo>=TAMANIO_INICIAL) hash_redimensionar(hash,tamanio_nuevo);
+  if (factor_de_carga==VALOR_REDIMENSION_BORRAR && tamanio_nuevo>=TAMANIO_INICIAL) hash_redimensionar(hash,tamanio_nuevo);
 
   if (!hash_pertenece(hash,clave)) return NULL;
 
