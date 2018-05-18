@@ -33,7 +33,7 @@ struct hash_iter {
 };
 
 /* Crea el campo */
-hash_campo_t* campo_crear(const char* clave,void* dato){
+hash_campo_t* hash_campo_crear(const char* clave,void* dato){
   hash_campo_t* campo=malloc(sizeof(hash_campo_t));
 
   if (!campo) return NULL;
@@ -56,22 +56,16 @@ hash_campo_t* campo_crear(const char* clave,void* dato){
 /* Libera la memoria requerida para la estructura campo.
  * Pre: el campo fue creado.
  * Post: la memoria requerida para la estructura campo fue liberada.
-*/
-void campo_destruir(hash_campo_t* campo){
+ */
+void hash_campo_destruir(hash_campo_t* campo,hash_destruir_dato_t destruir_dato){
+
+  if (destruir_dato) destruir_dato(campo->dato);
+
   free(campo->clave);
   free(campo);
 }
 
-/* Funcion que enmascara la funcion campo_destruir.
- * Pre: la estructura campo fue inicializada.
- * Post: la memoria requerida para la estructura campo fue liberada  si se
- * pasa un destructor se libera la memoria requerida para el dato.
-*/
-void campo_destruir_wrapper(void* campo){
-  campo_destruir(campo);
-}
-
-// Funcion de hashing para la clave.
+/* Funcion de hashing para la clave. */
 size_t djb2_hash(const char* cp){
     unsigned int hash = 5381;
     int c;
@@ -82,8 +76,9 @@ size_t djb2_hash(const char* cp){
     return hash;
 }
 
-// Esta es la funcion que se deberia usar para hashear la clave.
-// LLama a la funcion de hashing y le aplica el modulo del tamaño del hash.
+/* Esta es la funcion que se deberia usar para hashear la clave.
+ * LLama a la funcion de hashing y le aplica el modulo del tamaño del hash.
+ */
 size_t hashing(const char *clave, size_t capacidad){
     return djb2_hash(clave) % capacidad;
 }
@@ -102,7 +97,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
 
   hash->tabla = tabla;
 
-  for(int i=0; i<TAMANIO_INICIAL; i++) hash->tabla[i] = NULL;
+  for (int i=0; i<TAMANIO_INICIAL; i++) hash->tabla[i]=NULL;
 
   hash->capacidad=TAMANIO_INICIAL;
   hash->cantidad=0;
@@ -115,6 +110,20 @@ size_t hash_cantidad(const hash_t *hash){
   return hash->cantidad;
 }
 
+
+/* Busca un elemento en particular en la lista y devuelve un iterador en la
+ * posicion de dicho elemento. Si el elemento no esta en la lista devuelve
+ * un iterador al final.
+ */
+lista_iter_t* buscar(lista_t* lista, const char* clave) {
+    lista_iter_t* iter = lista_iter_crear(lista);
+    if (!iter) return NULL;
+    while (!lista_iter_al_final(iter) && strcmp(((hash_campo_t*)lista_iter_ver_actual(iter))->clave,clave) != 0){
+        lista_iter_avanzar(iter);
+    }
+    return iter;
+}
+
 /* Funcion privada del hash_guardar.
  * Guarda un elemento en el hash, si la clave ya se encuentra en la
  * estructura, la reemplaza. De no poder guardarlo devuelve false.
@@ -123,9 +132,6 @@ size_t hash_cantidad(const hash_t *hash){
 */
 bool _hash_guardar(hash_t* hash,const char* clave,void* dato){
   size_t posicion=hashing(clave,hash->capacidad);
-  hash_campo_t* campo=campo_crear(clave,dato);
-
-  if (!campo) return false;
 
   if (!hash->tabla[posicion]) hash->tabla[posicion]=lista_crear();
 
@@ -143,16 +149,11 @@ bool _hash_guardar(hash_t* hash,const char* clave,void* dato){
       char* clave_actual=campo_actual->clave;
 
       if (strcmp(clave,clave_actual)==0){
-         hash_campo_t* _campo_actual=lista_iter_borrar(iter);
 
-         if (hash->destructor){
-           hash_destruir_dato_t destruir=hash->destructor;
-           destruir(_campo_actual->dato);
-         }
+        if (hash->destructor) hash->destructor(campo_actual->dato);
 
-         campo_destruir(_campo_actual);
-         lista_iter_insertar(iter,campo);
-         break;
+        campo_actual->dato=dato;
+        break;
       }
       lista_iter_avanzar(iter);
     }
@@ -161,6 +162,10 @@ bool _hash_guardar(hash_t* hash,const char* clave,void* dato){
   }
 
   else{
+    hash_campo_t* campo=hash_campo_crear(clave,dato);
+
+    if (!campo) return false;
+
     lista_insertar_ultimo(lista_actual,campo);
     hash->cantidad++;
   }
@@ -199,18 +204,12 @@ bool hash_redimensionar(hash_t* hash,size_t tamanio_nuevo){
     continue;
     }
 
-    lista_iter_t* iter=lista_iter_crear(lista_actual);
-
-    if (!iter) return false;
-
-    while (!lista_iter_al_final(iter)){
-      hash_campo_t* campo_actual=lista_iter_ver_actual(iter);
+    while (!lista_esta_vacia(lista_actual)){
+      hash_campo_t* campo_actual=lista_borrar_primero(lista_actual);
       ok &=_hash_guardar(hash,campo_actual->clave,campo_actual->dato);
-      lista_iter_avanzar(iter);
-
+      hash_campo_destruir(campo_actual,NULL);
     }
-    lista_iter_destruir(iter);
-    lista_destruir(lista_actual,campo_destruir_wrapper);
+    lista_destruir(lista_actual,NULL);
   }
 
   free(tabla_vieja);
@@ -221,7 +220,7 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
   float factor_de_carga=(float)hash->cantidad/(float)hash->capacidad;
   size_t tamanio_nuevo=hash->capacidad*TAMANIO_REDIMENSION;
 
-  if (factor_de_carga==VALOR_REDIMENSION_GUARDAR) hash_redimensionar(hash,tamanio_nuevo);
+  if (factor_de_carga>=VALOR_REDIMENSION_GUARDAR) hash_redimensionar(hash,tamanio_nuevo);
 
   return _hash_guardar(hash,clave,dato);
 }
@@ -229,35 +228,29 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 void* hash_borrar(hash_t* hash,const char* clave){
   float factor_de_carga=(float)hash->cantidad/(float)hash->capacidad;
   size_t tamanio_nuevo=hash->capacidad/TAMANIO_REDIMENSION;
-  //size_t un_cuarto_hash=hash->capacidad/4;
 
-  if (factor_de_carga==VALOR_REDIMENSION_BORRAR && tamanio_nuevo>=TAMANIO_INICIAL) hash_redimensionar(hash,tamanio_nuevo);
-
-  if (!hash_pertenece(hash,clave)) return NULL;
+  if (factor_de_carga>=VALOR_REDIMENSION_BORRAR && tamanio_nuevo>=TAMANIO_INICIAL) hash_redimensionar(hash,tamanio_nuevo);
 
   size_t posicion=hashing(clave,hash->capacidad);
   lista_t* lista_actual=hash->tabla[posicion];
-  lista_iter_t* iter=lista_iter_crear(lista_actual);
+
+  if (!lista_actual) return NULL;
+
+  lista_iter_t* iter=buscar(lista_actual,clave);
 
   if (!iter) return NULL;
 
-  void* dato=NULL;
+  void* dato;
 
-  while (!lista_iter_al_final(iter)){
-    hash_campo_t* campo_actual=lista_iter_ver_actual(iter);
-    char* clave_actual=campo_actual->clave;
+  if (lista_iter_al_final(iter)) dato=NULL;
 
-    if (strcmp(clave,clave_actual)==0){
-      hash_campo_t* _campo_actual=lista_iter_borrar(iter);
-      dato=_campo_actual->dato;
-      campo_destruir(_campo_actual);
-      hash->cantidad--;
-      break;
-    }
-
-    lista_iter_avanzar(iter);
+  else{
+    hash_campo_t* campo_actual=lista_iter_borrar(iter);
+    dato=campo_actual->dato;
+    hash_campo_destruir(campo_actual,NULL);
+    hash->cantidad--;
   }
-
+  
   lista_iter_destruir(iter);
   return dato;
 }
@@ -290,27 +283,22 @@ bool hash_pertenece(const hash_t* hash,const char* clave){
 }
 
 void* hash_obtener(const hash_t* hash,const char* clave){
-
-  if (!hash_pertenece(hash,clave)) return NULL;
-
   size_t posicion=hashing(clave,hash->capacidad);
   lista_t* lista_actual=hash->tabla[posicion];
-  lista_iter_t* iter=lista_iter_crear(lista_actual);
+
+  if (!lista_actual) return false;
+
+  lista_iter_t* iter=buscar(lista_actual,clave);
 
   if (!iter) return NULL;
 
-  void* dato=NULL;
+  void* dato;
 
-  while (!lista_iter_al_final(iter)){
+  if (lista_iter_al_final(iter)) dato=NULL;
+
+  else{
     hash_campo_t* campo_actual=lista_iter_ver_actual(iter);
-    char* clave_actual=campo_actual->clave;
-
-    if (strcmp(clave,clave_actual)==0){
-      dato=campo_actual->dato;
-      break;
-    }
-
-    lista_iter_avanzar(iter);
+    dato=campo_actual->dato;
   }
 
   lista_iter_destruir(iter);
@@ -325,27 +313,11 @@ void hash_destruir(hash_t* hash){
 
     lista_t* lista_actual=hash->tabla[i];
 
-    if (lista_esta_vacia(lista_actual)){
-      lista_destruir(lista_actual,NULL);
-      continue;
+    while (!lista_esta_vacia(lista_actual)){
+      hash_campo_t* campo_actual=lista_borrar_primero(lista_actual);
+      hash_campo_destruir(campo_actual,hash->destructor);
     }
 
-    lista_iter_t* iter=lista_iter_crear(lista_actual);
-
-    if (!iter) return;
-
-    while (!lista_iter_al_final(iter)){
-      hash_campo_t* campo_actual=lista_iter_borrar(iter);
-
-      if (hash->destructor){
-        hash_destruir_dato_t destruir=hash->destructor;
-        destruir(campo_actual->dato);
-      }
-
-      campo_destruir(campo_actual);
-    }
-
-    lista_iter_destruir(iter);
     lista_destruir(lista_actual,NULL);
   }
 
