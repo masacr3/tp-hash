@@ -9,9 +9,8 @@
 */
 
 #define TAMANIO_INICIAL 100
-#define VALOR_REDIMENSION_GUARDAR 0.7
 #define TAMANIO_REDIMENSION 2
-#define VALOR_REDIMENSION_BORRAR 0.4
+#define VALOR_REDIMENSION 3
 
 struct hash{
   lista_t** tabla;
@@ -97,7 +96,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
 
   hash->tabla = tabla;
 
-  for (int i=0; i<TAMANIO_INICIAL; i++) hash->tabla[i]=NULL;
+  for (int i=0; i<TAMANIO_INICIAL; i++) hash->tabla[i]=lista_crear();
 
   hash->capacidad=TAMANIO_INICIAL;
   hash->cantidad=0;
@@ -109,7 +108,6 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
 size_t hash_cantidad(const hash_t *hash){
   return hash->cantidad;
 }
-
 
 /* Busca un elemento en particular en la lista y devuelve un iterador en la
  * posicion de dicho elemento. Si el elemento no esta en la lista devuelve
@@ -124,41 +122,62 @@ lista_iter_t* buscar(lista_t* lista, const char* clave) {
     return iter;
 }
 
-/* Funcion privada del hash_guardar.
- * Guarda un elemento en el hash, si la clave ya se encuentra en la
- * estructura, la reemplaza. De no poder guardarlo devuelve false.
- * Pre: La estructura hash fue inicializada.
- * Post: Se almacenó el par (clave, dato).
+/* Redimensiona la estructura hash al nuevo tamanio que es tamanio_nuevo.
+ * Pre: la estructura hash fue inicializada.
+ * Post: se tiene un nuevo tamanio de la estructura hash el cual es el mismo que
+ * el tamanio_nuevo recibido.
 */
-bool _hash_guardar(hash_t* hash,const char* clave,void* dato){
-  size_t posicion=hashing(clave,hash->capacidad);
+bool hash_redimensionar(hash_t* hash,size_t tamanio_nuevo){
+  lista_t** tabla_vieja=hash->tabla;
+  size_t tamanio_antiguo=hash->capacidad;
+  lista_t** tabla_nueva=malloc(sizeof(lista_t*)*tamanio_nuevo);
 
-  if (!hash->tabla[posicion]) hash->tabla[posicion]=lista_crear();
+  if (!tabla_nueva) return false;
 
-  lista_t* lista_actual=hash->tabla[posicion];
+  hash->tabla=tabla_nueva;
 
-  if (!lista_actual) return false;
+  for (int i=0; i<tamanio_nuevo; i++) hash->tabla[i]=lista_crear();
 
-  if (hash_pertenece(hash,clave)){
-    lista_iter_t* iter=lista_iter_crear(lista_actual);
+  hash->capacidad=tamanio_nuevo;
 
-    if (!iter) return false;
+  for (int i=0; i<tamanio_antiguo; i++){
+    lista_t* lista_actual=tabla_vieja[i];
 
-    while (!lista_iter_al_final(iter)){
-      hash_campo_t* campo_actual=lista_iter_ver_actual(iter);
-      char* clave_actual=campo_actual->clave;
-
-      if (strcmp(clave,clave_actual)==0){
-
-        if (hash->destructor) hash->destructor(campo_actual->dato);
-
-        campo_actual->dato=dato;
-        break;
-      }
-      lista_iter_avanzar(iter);
+    if (lista_esta_vacia(lista_actual)){
+    lista_destruir(lista_actual,NULL);
+    continue;
     }
 
-    lista_iter_destruir(iter);
+    while (!lista_esta_vacia(lista_actual)){
+      hash_campo_t* campo_actual=lista_borrar_primero(lista_actual);
+      size_t posicion=hashing(campo_actual->clave,hash->capacidad);
+      lista_insertar_ultimo(hash->tabla[posicion],campo_actual);
+    }
+    lista_destruir(lista_actual,NULL);
+  }
+
+  free(tabla_vieja);
+  return true;
+}
+
+bool hash_guardar(hash_t *hash, const char *clave, void *dato){
+  size_t factor_de_carga=hash->cantidad/hash->capacidad;
+  size_t tamanio_nuevo=hash->capacidad*TAMANIO_REDIMENSION;
+
+  if (factor_de_carga>=VALOR_REDIMENSION) hash_redimensionar(hash,tamanio_nuevo);
+
+  size_t posicion=hashing(clave,hash->capacidad);
+  lista_t* lista_actual=hash->tabla[posicion];
+  lista_iter_t* iter=buscar(lista_actual,clave);
+
+  if (!iter) return false;
+
+  if (!lista_iter_al_final(iter)){
+    hash_campo_t* campo_actual=lista_iter_ver_actual(iter);
+
+    if (hash->destructor) hash->destructor(campo_actual->dato);
+
+    campo_actual->dato=dato;
   }
 
   else{
@@ -170,72 +189,18 @@ bool _hash_guardar(hash_t* hash,const char* clave,void* dato){
     hash->cantidad++;
   }
 
+  lista_iter_destruir(iter);
   return true;
 }
 
-/* Redimensiona la estructura hash al nuevo tamanio que es tamanio_nuevo.
- * Pre: la estructura hash fue inicializada.
- * Post: se tiene un nuevo tamanio de la estructura hash el cual es el mismo que
- * el tamanio_nuevo recibido.
-*/
-bool hash_redimensionar(hash_t* hash,size_t tamanio_nuevo){
-  bool ok=true;
-  lista_t** tabla_vieja=hash->tabla;
-  size_t tamanio_antiguo=hash->capacidad;
-  lista_t** tabla_nueva=malloc(sizeof(lista_t*)*tamanio_nuevo);
-
-  if (!tabla_nueva) return false;
-
-  hash->tabla=tabla_nueva;
-
-  for (int i=0; i<tamanio_nuevo; i++) hash->tabla[i]=NULL;
-
-  hash->capacidad=tamanio_nuevo;
-  hash->cantidad=0;
-
-  for (int i=0; i<tamanio_antiguo; i++){
-
-    if (!tabla_vieja[i]) continue;
-
-    lista_t* lista_actual=tabla_vieja[i];
-
-    if (lista_esta_vacia(lista_actual)){
-    lista_destruir(lista_actual,NULL);
-    continue;
-    }
-
-    while (!lista_esta_vacia(lista_actual)){
-      hash_campo_t* campo_actual=lista_borrar_primero(lista_actual);
-      ok &=_hash_guardar(hash,campo_actual->clave,campo_actual->dato);
-      hash_campo_destruir(campo_actual,NULL);
-    }
-    lista_destruir(lista_actual,NULL);
-  }
-
-  free(tabla_vieja);
-  return ok;
-}
-
-bool hash_guardar(hash_t *hash, const char *clave, void *dato){
-  float factor_de_carga=(float)hash->cantidad/(float)hash->capacidad;
-  size_t tamanio_nuevo=hash->capacidad*TAMANIO_REDIMENSION;
-
-  if (factor_de_carga>=VALOR_REDIMENSION_GUARDAR) hash_redimensionar(hash,tamanio_nuevo);
-
-  return _hash_guardar(hash,clave,dato);
-}
-
 void* hash_borrar(hash_t* hash,const char* clave){
-  float factor_de_carga=(float)hash->cantidad/(float)hash->capacidad;
+  size_t factor_de_carga=hash->cantidad/hash->capacidad;
   size_t tamanio_nuevo=hash->capacidad/TAMANIO_REDIMENSION;
 
-  if (factor_de_carga>=VALOR_REDIMENSION_BORRAR && tamanio_nuevo>=TAMANIO_INICIAL) hash_redimensionar(hash,tamanio_nuevo);
+  if (factor_de_carga>=VALOR_REDIMENSION && tamanio_nuevo>=TAMANIO_INICIAL) hash_redimensionar(hash,tamanio_nuevo);
 
   size_t posicion=hashing(clave,hash->capacidad);
   lista_t* lista_actual=hash->tabla[posicion];
-
-  if (!lista_actual) return NULL;
-
   lista_iter_t* iter=buscar(lista_actual,clave);
 
   if (!iter) return NULL;
@@ -250,7 +215,7 @@ void* hash_borrar(hash_t* hash,const char* clave){
     hash_campo_destruir(campo_actual,NULL);
     hash->cantidad--;
   }
-  
+
   lista_iter_destruir(iter);
   return dato;
 }
@@ -259,8 +224,6 @@ bool hash_pertenece(const hash_t* hash,const char* clave){
   size_t coincidencia=0;
   size_t posicion=hashing(clave,hash->capacidad);
   lista_t* lista_actual=hash->tabla[posicion];
-
-  if (!lista_actual) return false;
 
   if (lista_esta_vacia(lista_actual)) return false;
 
@@ -285,9 +248,6 @@ bool hash_pertenece(const hash_t* hash,const char* clave){
 void* hash_obtener(const hash_t* hash,const char* clave){
   size_t posicion=hashing(clave,hash->capacidad);
   lista_t* lista_actual=hash->tabla[posicion];
-
-  if (!lista_actual) return false;
-
   lista_iter_t* iter=buscar(lista_actual,clave);
 
   if (!iter) return NULL;
@@ -342,11 +302,12 @@ hash_iter_t* hash_iter_crear(const hash_t *hash){
   for (size_t i=0; i<hash->capacidad; i++){
     lista_t* lista_actual=hash->tabla[i];
 
-    if (!lista_actual) continue;
+    if (!lista_esta_vacia(lista_actual)){
+      iter->iter_lista=lista_iter_crear(lista_actual);
+      iter->indice_actual=i;
+      break;
+    }
 
-    iter->iter_lista=lista_iter_crear(lista_actual);
-    iter->indice_actual=i;
-    break;
   }
   return iter;
 }
@@ -366,11 +327,12 @@ bool hash_iter_avanzar(hash_iter_t *iter){
   for (size_t pos = iter->indice_actual+1; pos < iter->hash->capacidad; pos++){
     lista_t* lista_actual=iter->hash->tabla[pos];
 
-    if (!lista_actual) continue;
+    if (!lista_esta_vacia(lista_actual)){
+      iter->indice_actual = pos;
+      iter->iter_lista = lista_iter_crear(lista_actual);
+      return true;
+    }
 
-    iter->indice_actual = pos;
-    iter->iter_lista = lista_iter_crear(lista_actual);
-    return true;
   }
 
   return false;
@@ -381,7 +343,7 @@ bool hash_iter_al_final(const hash_iter_t *iter) {
 }
 
 const char *hash_iter_ver_actual(const hash_iter_t *iter){
-  if (hash_iter_al_final(iter)) return NULL;
+  if (iter->iterados == iter->hash->cantidad) return NULL;
 
   hash_campo_t* campo = lista_iter_ver_actual(iter->iter_lista);
 
@@ -389,6 +351,6 @@ const char *hash_iter_ver_actual(const hash_iter_t *iter){
 }
 
 void hash_iter_destruir(hash_iter_t *iter) {
-  if (!hash_iter_al_final(iter)) lista_iter_destruir(iter->iter_lista);
+  if (!(iter->iterados == iter->hash->cantidad)) lista_iter_destruir(iter->iter_lista);
   free(iter);
 }
